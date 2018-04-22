@@ -7,6 +7,7 @@ import (
 
 	"github.com/naveego/prometheus-go/timer"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -66,6 +67,12 @@ func init() {
 		},
 		[]string{"service", "tenant", "method"},
 	)
+
+	prometheus.MustRegister(httpRequestCount)
+	prometheus.MustRegister(httpErrorCount)
+	prometheus.MustRegister(httpEgressBytes)
+	prometheus.MustRegister(httpIngressBytes)
+	prometheus.MustRegister(httpDurationSeconds)
 }
 
 // Client defines the API for an http metrics client
@@ -85,6 +92,7 @@ func NewClient() Client {
 
 // NewClientWithDefaults builds and returns a new client using the provided default settings
 func NewClientWithDefaults(opts *TrackingOpts) Client {
+	logrus.Debug("Creating new prometheus client")
 	return &client{opts}
 }
 
@@ -105,6 +113,8 @@ func (c *client) BuildTimer() timer.Timer {
 }
 
 func (c *client) TrackRequest(r *http.Request, t timer.Timer, opts *TrackingOpts) {
+	logrus.Debug("Incrementing Prometheus Counters")
+
 	service := opts.Service
 	if service == "" {
 		service = c.defaultOpts.Service
