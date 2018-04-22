@@ -148,5 +148,5 @@ func (c *client) TrackRequest(r *http.Request, t timer.Timer, opts *TrackingOpts
 	// Increment Egress
 	httpEgressBytes.WithLabelValues(service, tenant, r.Method).Add(float64(opts.ResponseBytes))
 	// Observe duration
-	httpDurationSeconds.WithLabelValues(service, tenant, r.Method).Observe(float64(t.Elapsed()))
+	httpDurationSeconds.WithLabelValues(service, tenant, r.Method).Observe(t.Elapsed().Seconds())
 }
