@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/naveego/prometheus-go/timer"
+	"github.com/felixge/httpsnoop"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )
@@ -77,9 +77,7 @@ func init() {
 
 // Client defines the API for an http metrics client
 type Client interface {
-	BuildTimer() timer.Timer
-
-	TrackRequest(r *http.Request, t timer.Timer, opts *TrackingOpts)
+	TrackRequest(handler http.Handler, w http.ResponseWriter, r *http.Request, opts *TrackingOpts)
 }
 
 // NewClient builds and returns a new client
@@ -98,21 +96,15 @@ func NewClientWithDefaults(opts *TrackingOpts) Client {
 
 // TrackingOpts define options for tracking http requests
 type TrackingOpts struct {
-	Service            string
-	Tenant             string
-	ResponseStatusCode int
-	ResponseBytes      int
+	Service string
+	Tenant  string
 }
 
 type client struct {
 	defaultOpts *TrackingOpts
 }
 
-func (c *client) BuildTimer() timer.Timer {
-	return &timer.MemoryTimer{}
-}
-
-func (c *client) TrackRequest(r *http.Request, t timer.Timer, opts *TrackingOpts) {
+func (c *client) TrackRequest(handler http.Handler, w http.ResponseWriter, r *http.Request, opts *TrackingOpts) {
 	logrus.Debug("Incrementing Prometheus Counters")
 
 	service := opts.Service
@@ -129,24 +121,23 @@ func (c *client) TrackRequest(r *http.Request, t timer.Timer, opts *TrackingOpts
 	service = strings.ToLower(service)
 	tenant = strings.ToLower(tenant)
 
-	respCode := "000"
-	if opts.ResponseStatusCode >= 0 {
-		respCode = fmt.Sprintf("%d", opts.ResponseStatusCode)
+	m := httpsnoop.CaptureMetrics(handler, w, r)
 
-		if opts.ResponseStatusCode > http.StatusBadRequest {
+	respCode := "000"
+	if m.Code >= 0 {
+		respCode = fmt.Sprintf("%d", m.Code)
+
+		if m.Code > http.StatusBadRequest {
 			httpErrorCount.WithLabelValues(service, tenant, r.Method, respCode).Inc()
 		}
 	}
-
-	// Stop the timer
-	t.Stop()
 
 	// Increment request count
 	httpRequestCount.WithLabelValues(service, tenant, r.Method, respCode).Inc()
 	// Increment Ingress
 	httpIngressBytes.WithLabelValues(service, tenant, r.Method).Add(float64(r.ContentLength))
 	// Increment Egress
-	httpEgressBytes.WithLabelValues(service, tenant, r.Method).Add(float64(opts.ResponseBytes))
+	httpEgressBytes.WithLabelValues(service, tenant, r.Method).Add(float64(m.Written))
 	// Observe duration
-	httpDurationSeconds.WithLabelValues(service, tenant, r.Method).Observe(t.Elapsed().Seconds())
+	httpDurationSeconds.WithLabelValues(service, tenant, r.Method).Observe(m.Duration.Seconds())
 }

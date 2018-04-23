@@ -8,6 +8,12 @@
   revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
 
 [[projects]]
+  name = "github.com/felixge/httpsnoop"
+  packages = ["."]
+  revision = "eadd4fad6aac69ae62379194fe0219f3dbc80fd3"
+  version = "v1.0.0"
+
+[[projects]]
   name = "github.com/golang/protobuf"
   packages = ["proto"]
   revision = "925541529c1fa6821df4e44ce2723319eb2be768"
@@ -97,6 +103,18 @@
   revision = "8b1c2da0d56deffdbb9e48d4414b4e674bd8083e"
 
 [[projects]]
+  name = "github.com/sirupsen/logrus"
+  packages = ["."]
+  revision = "c155da19408a8799da419ed3eeb0cb5db0ad5dbc"
+  version = "v1.0.5"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/crypto"
+  packages = ["ssh/terminal"]
+  revision = "e73bf333ef8920dbb52ad18d4bd38ad9d9bc76d7"
+
+[[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = [
@@ -109,7 +127,10 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
-  packages = ["unix"]
+  packages = [
+    "unix",
+    "windows"
+  ]
   revision = "79b0c6888797020a994db17c8510466c72fe75d9"
 
 [[projects]]
@@ -145,6 +166,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7aa543e49966e394968c60b6755a368c253e4886f6d856d0a9450e88f0ed9d1e"
+  inputs-digest = "0ba5e52d34a3f6a269d46d787a1f48741503d5b82684928dbd7d237b36d31735"
   solver-name = "gps-cdcl"
   solver-version = 1
